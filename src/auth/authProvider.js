@@ -1,29 +1,17 @@
+import { supabaseClient } from "../utils/supabaseClient";
+
 const authProvider = {
   // send username and password to the auth server and get back credentials
   login: async ({ username, password }) => {
-    await fetch(
-      `${process.env.REACT_APP_SUPABASE_URL}/auth/v1/token?grant_type=password`,
-      {
-        method: "post",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: process.env.REACT_APP_ANON_KEY,
-        },
-        body: JSON.stringify({
-          email: username,
-          password: password,
-        }),
-      }
-    )
-      .then((response) => response.json())
-      .then((result) =>
-        sessionStorage.setItem("supabaseSession", JSON.stringify(result))
-      );
+    await supabaseClient.auth.signIn({
+      email: username,
+      password: password,
+    });
 
-    if (!sessionStorage.getItem("supabaseSession"))
+    if (!supabaseClient.auth.session())
       return Promise.reject({ message: "error" });
 
-    if (sessionStorage.getItem("supabaseSession")) return Promise.resolve();
+    if (supabaseClient.auth.session()) return Promise.resolve();
   },
 
   // when the dataProvider returns an error, check if this is an authentication error
@@ -31,21 +19,22 @@ const authProvider = {
 
   // when the user navigates, make sure that their credentials are still valid
   checkAuth: () => {
-    if (sessionStorage.getItem("supabaseSession")) return Promise.resolve();
-
+    if (supabaseClient.auth.session()) return Promise.resolve();
+    
     return Promise.reject({ message: "no user" });
   },
 
   // remove local credentials and notify the auth server that the user logged out
   logout: async () => {
-    sessionStorage.removeItem("supabaseSession");
+    await supabaseClient.auth.signOut()
 
     return Promise.resolve();
   },
 
   // get the user's profile
-  getIdentity: () =>
-    Promise.resolve(JSON.parse(sessionStorage.getItem("supabaseSession")).user),
+  getIdentity: () => {
+    return Promise.resolve(JSON.parse(supabaseClient.auth.session().user));
+  },
 
   // get the user permissions (optional)
   getPermissions: () => Promise.resolve(""),

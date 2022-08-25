@@ -6,6 +6,7 @@ import CommentList from "../components/CommentList";
 import CommentEdit from "../components/CommentEdit";
 import CommentCreate from "../components/CommentCreate";
 import authProvider from "../auth/authProvider";
+import { supabaseClient } from "../utils/supabaseClient";
 
 const httpClient = (url, options = {}) => {
   if (!options.headers) {
@@ -16,7 +17,7 @@ const httpClient = (url, options = {}) => {
   options.headers.set("apikey", `${process.env.REACT_APP_ANON_KEY}`);
 
   // set the jwt authorization header
-  if (JSON.parse(sessionStorage.getItem("supabaseSession"))) options.headers.set("Authorization", `Bearer ${JSON.parse(sessionStorage.getItem("supabaseSession")).access_token}`)
+  if (supabaseClient.auth.session()) options.headers.set("Authorization", `Bearer ${supabaseClient.auth.session().access_token}`)
 
   return fetchUtils.fetchJson(url, options);
 };
