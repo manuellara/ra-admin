@@ -33,7 +33,7 @@ const authProvider = {
 
   // get the user's profile
   getIdentity: () => {
-    return Promise.resolve(JSON.parse(supabaseClient.auth.session().user));
+    return Promise.resolve(supabaseClient.auth.session().user);
   },
 
   // get the user permissions (optional)
