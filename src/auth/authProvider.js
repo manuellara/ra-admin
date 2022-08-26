@@ -15,25 +15,35 @@ const authProvider = {
   },
 
   // when the dataProvider returns an error, check if this is an authentication error
-  checkError: (error) => Promise.resolve(error),
+  checkError: (error) => {
+    const status = error.status;
+
+    if (status === 401 || status === 403) {
+      return Promise.reject({ redirectTo: "/unauthorized", logoutUser: false });
+    }
+
+    Promise.resolve();
+  },
 
   // when the user navigates, make sure that their credentials are still valid
   checkAuth: () => {
     if (supabaseClient.auth.session()) return Promise.resolve();
-    
+
     return Promise.reject({ message: "no user" });
   },
 
   // remove local credentials and notify the auth server that the user logged out
   logout: async () => {
-    await supabaseClient.auth.signOut()
+    await supabaseClient.auth.signOut();
 
     return Promise.resolve();
   },
 
   // get the user's profile
   getIdentity: () => {
-    return Promise.resolve(supabaseClient.auth.session().user);
+    return supabaseClient.auth.session()
+      ? Promise.resolve(supabaseClient.auth.session().user)
+      : Promise.reject({ message: "no user" });
   },
 
   // get the user permissions (optional)
